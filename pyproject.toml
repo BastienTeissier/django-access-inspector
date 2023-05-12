@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "django-access-control"
+version = "0.1.0"
+description = ""
+authors = ["Bastien Teissier <bastient@theodo.fr>"]
+readme = "README.md"
+packages = [{include = "django_access_control"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+ruff = "^0.0.265"
+pytest = "^7.3.1"
+django = "^4.2.1"
+pytest-django = "^4.5.2"
+djangorestframework = "^3.14.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

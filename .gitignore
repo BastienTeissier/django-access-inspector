@@ -1,0 +1,9 @@
+.vs/
+__pycache__
+*.pyc
+.venv
+*.DS_Store
+dist/
+.pytest_cache/
+.ruff_cache/
+django_access_control.egg-info/
