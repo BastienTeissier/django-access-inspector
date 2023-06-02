@@ -8,6 +8,7 @@ packages = [{include = "django_access_control"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
+rich = "^13.3.5"
 
 
 [tool.poetry.group.dev.dependencies]

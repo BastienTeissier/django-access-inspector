@@ -6,6 +6,9 @@ from django.core.exceptions import ViewDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 from django.urls import URLPattern, URLResolver  # type: ignore
 from django.utils import translation
+from rich.console import Console
+from rich.table import Table
+from rich.text import Text
 
 
 class RegexURLPattern:  # type: ignore
@@ -30,10 +33,9 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         super().add_arguments(parser)
         parser.add_argument(
-            "--urlconf",
-            "-c",
-            dest="urlconf",
-            default="ROOT_URLCONF",
+            "--output",
+            dest="output",
+            default="cli",
             help="Set the settings URL conf variable to use",
         )
 
@@ -52,10 +54,6 @@ class Command(BaseCommand):
         try:
             urlconf = __import__(getattr(settings, urlconf), {}, {}, [""])
         except Exception as e:
-            if options["traceback"]:
-                import traceback
-
-                traceback.print_exc()
             raise CommandError(
                 "Error occurred while trying to load %s: %s"
                 % (getattr(settings, urlconf), str(e))
@@ -136,11 +134,51 @@ class Command(BaseCommand):
                 "authentication_classes": list(set(authentications)),
             }
 
-        print(
-            json.dumps(
-                {"views": self.split_views(views), "unchecked_views": unchecked_views}
+        split_views = self.split_views(views)
+
+        if options["output"] == "json":
+            print(
+                json.dumps({"views": split_views, "unchecked_views": unchecked_views})
             )
-        )
+        else:
+            self.print_views_in_terminal(views, unchecked_views)
+            console = Console()
+            console.print(
+                Text(
+                    f"Authenticated views: {len(split_views['authenticated'])}",
+                    style="bold green",
+                )
+            )
+            console.print(
+                Text(
+                    f"Unauthenticated views: {len(split_views['unauthenticated'])}",
+                    style="bold red",
+                )
+            )
+            console.print(
+                Text(f"Unchecked views: {len(unchecked_views)}", style="bold red")
+            )
+
+    def print_views_in_terminal(self, views, unchecked_views):
+        console = Console()
+
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("View")
+        table.add_column("Permission Classes")
+        table.add_column("Authentication Classes")
+        for url, perm in views.items():
+            if url is not None:
+                permissions = Text("None", style="bold red")
+                if len(perm.get("permissions_classes", 0)) > 0:
+                    permissions = Text(", ".join(perm["permissions_classes"]))
+                authentications = Text("None", style="bold red")
+                if len(perm.get("authentication_classes", 0)) > 0:
+                    authentications = Text(", ".join(perm["authentication_classes"]))
+                table.add_row(
+                    Text(url, style="bold blue"), permissions, authentications
+                )
+
+        console.print(table)
 
     def split_views(self, views):
         authenticated = {}
