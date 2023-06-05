@@ -6,3 +6,6 @@ lint:
 
 lint-fix:
 	poetry run ruff check . --fix
+
+check:
+	poetry run python manage.py scan_access_control
