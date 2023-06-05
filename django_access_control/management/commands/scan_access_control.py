@@ -142,22 +142,33 @@ class Command(BaseCommand):
             )
         else:
             self.print_views_in_terminal(views, unchecked_views)
-            console = Console()
-            console.print(
-                Text(
-                    f"Authenticated views: {len(split_views['authenticated'])}",
-                    style="bold green",
-                )
+
+    def get_default_classes(self):
+        default_classes = {"authentication": [], "permission": []}
+        if getattr(settings, "REST_FRAMEWORK", None) is None:
+            return default_classes
+        default_classes["permission"] = [
+            c.split(".")[-1]
+            for c in settings.REST_FRAMEWORK.get("DEFAULT_PERMISSION_CLASSES", [])
+        ]
+        default_classes["authentication"] = [
+            c.split(".")[-1]
+            for c in settings.REST_FRAMEWORK.get("DEFAULT_AUTHENTICATION_CLASSES", [])
+        ]
+        return default_classes
+
+    def _render_class_cell(
+        self, classes, default_classes, number_of_no, number_of_default
+    ):
+        if len(classes) == 0:
+            return (Text("None", style="bold red"), number_of_no + 1, number_of_default)
+        if len(classes) == 1 and classes[0] in default_classes:
+            return (
+                Text(classes[0], style="bold yellow"),
+                number_of_no,
+                number_of_default + 1,
             )
-            console.print(
-                Text(
-                    f"Unauthenticated views: {len(split_views['unauthenticated'])}",
-                    style="bold red",
-                )
-            )
-            console.print(
-                Text(f"Unchecked views: {len(unchecked_views)}", style="bold red")
-            )
+        return (Text(", ".join(classes)), number_of_no, number_of_default)
 
     def print_views_in_terminal(self, views, unchecked_views):
         console = Console()
@@ -166,19 +177,69 @@ class Command(BaseCommand):
         table.add_column("View")
         table.add_column("Permission Classes")
         table.add_column("Authentication Classes")
+        default_classes = self.get_default_classes()
+        no_authentication, authentication_default, no_permission, permission_default = (
+            0,
+            0,
+            0,
+            0,
+        )
         for url, perm in views.items():
             if url is not None:
-                permissions = Text("None", style="bold red")
-                if len(perm.get("permissions_classes", 0)) > 0:
-                    permissions = Text(", ".join(perm["permissions_classes"]))
-                authentications = Text("None", style="bold red")
-                if len(perm.get("authentication_classes", 0)) > 0:
-                    authentications = Text(", ".join(perm["authentication_classes"]))
+                (
+                    permissions,
+                    no_permission,
+                    permission_default,
+                ) = self._render_class_cell(
+                    perm.get("permissions_classes", []),
+                    default_classes["permission"],
+                    no_permission,
+                    permission_default,
+                )
+                (
+                    authentications,
+                    no_authentication,
+                    authentication_default,
+                ) = self._render_class_cell(
+                    perm.get("authentication_classes", []),
+                    default_classes["authentication"],
+                    no_authentication,
+                    authentication_default,
+                )
                 table.add_row(
                     Text(url, style="bold blue"), permissions, authentications
                 )
 
+        number_of_views = len(views.keys())
         console.print(table)
+
+        console.print(
+            Text(
+                f"Default authentication : {authentication_default} / {number_of_views}",
+                style="bold yellow",
+            )
+        )
+        console.print(
+            Text(
+                f"No authentication : {no_authentication} / {number_of_views}",
+                style="bold red",
+            )
+        )
+        console.print(
+            Text(
+                f"Default permission : {permission_default} / {number_of_views}",
+                style="bold yellow",
+            )
+        )
+        console.print(
+            Text(
+                f"No permission : {no_permission} / {number_of_views}",
+                style="bold red",
+            )
+        )
+        console.print(
+            Text(f"Unchecked views: {len(unchecked_views)}", style="bold red")
+        )
 
     def split_views(self, views):
         authenticated = {}
