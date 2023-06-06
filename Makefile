@@ -9,3 +9,7 @@ lint-fix:
 
 check:
 	poetry run python manage.py inspect_access_control
+
+build:
+	poetry run python -m build --sdist
+	poetry run python -m build --wheel
