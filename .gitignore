@@ -6,4 +6,4 @@ __pycache__
 dist/
 .pytest_cache/
 .ruff_cache/
-django_access_control.egg-info/
+django_access_inspector.egg-info/

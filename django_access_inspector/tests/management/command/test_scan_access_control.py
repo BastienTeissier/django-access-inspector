@@ -8,7 +8,7 @@ from django.test.utils import override_settings
 
 from unittest.mock import patch
 
-from django_access_control.tests.mocks.views import (
+from django_access_inspector.tests.mocks.views import (
     DemoAttribute,
     DemoDecorator,
     NoAuthDemo,
@@ -37,12 +37,12 @@ urlpatterns = [
 
 
 @override_settings(
-    ROOT_URLCONF="django_access_control.tests.management.command.test_scan_access_control"
+    ROOT_URLCONF="django_access_inspector.tests.management.command.test_inspect_access_control"
 )
 class ShowUrlsTests(TestCase):
     @patch("sys.stdout", new_callable=StringIO)
     def test_output_views_scan_access(self, m_stdout):
-        call_command("scan_access_control")
+        call_command("inspect_access_control")
 
         views = json.loads(m_stdout.getvalue())["views"]
         assert len(views["authenticated"]) == 4

@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "django-access-control"
+name = "django-access-inspector"
 version = "0.1.0"
 description = ""
 authors = ["Bastien Teissier <bastient@theodo.fr>"]
 readme = "README.md"
-packages = [{include = "django_access_control"}]
+packages = [{include = "django_access_inspector"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"

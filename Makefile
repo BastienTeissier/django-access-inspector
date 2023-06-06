@@ -8,4 +8,4 @@ lint-fix:
 	poetry run ruff check . --fix
 
 check:
-	poetry run python manage.py scan_access_control
+	poetry run python manage.py inspect_access_control

@@ -1,6 +1,6 @@
-# Django Scan Access Control
+# Django Scan Access inspector
 
-Django Access Control is a Django app to scan access on an application views.
+Django Access inspector is a Django app to scan access on an application views.
 
 ## Build
 
@@ -12,13 +12,13 @@ Run the following command:
 
 Run one of the following command:
 
-    pip install django-access-control
+    pip install django-access-inspector
 
-    poetry add PATH_TO_THIS_REPO/dist/django_access_control-0.1.tar.gz
+    poetry add PATH_TO_THIS_REPO/dist/django_access_inspector-0.1.tar.gz
 
-Add "django_access_control" to your INSTALLED_APPS setting like this::
+Add "django_access_inspector" to your INSTALLED_APPS setting like this::
 
     INSTALLED_APPS = [
         ...,
-        "django_access_control",
+        "django_access_inspector",
     ]

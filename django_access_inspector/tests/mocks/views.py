@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, viewsets, mixins
-from django_access_control.tests.mocks.permissions import TestOnly
+from django_access_inspector.tests.mocks.permissions import TestOnly
 
 
 @permission_classes([IsAuthenticated, TestOnly])

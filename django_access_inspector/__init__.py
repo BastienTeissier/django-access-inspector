@@ -1,0 +1,1 @@
+default_app_config = "django_access_inspector.apps.DjangoAccessInspectorConfig"

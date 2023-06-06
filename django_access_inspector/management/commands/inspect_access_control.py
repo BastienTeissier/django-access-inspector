@@ -215,25 +215,25 @@ class Command(BaseCommand):
 
         console.print(
             Text(
-                f"Default authentication : {authentication_default} / {number_of_views}",
+                f"Default authentication: {authentication_default} / {number_of_views}",
                 style="bold yellow",
             )
         )
         console.print(
             Text(
-                f"No authentication : {no_authentication} / {number_of_views}",
+                f"No authentication: {no_authentication} / {number_of_views}",
                 style="bold red",
             )
         )
         console.print(
             Text(
-                f"Default permission : {permission_default} / {number_of_views}",
+                f"Default permission: {permission_default} / {number_of_views}",
                 style="bold yellow",
             )
         )
         console.print(
             Text(
-                f"No permission : {no_permission} / {number_of_views}",
+                f"No permission: {no_permission} / {number_of_views}",
                 style="bold red",
             )
         )
