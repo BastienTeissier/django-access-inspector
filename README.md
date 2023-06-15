@@ -26,3 +26,5 @@ Add "django_access_inspector" to your INSTALLED_APPS setting like this:
 ```
 python manage.py inspect_access_control
 ```
+
+For a json output:
