@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-access-inspector"
-version = "0.1.0"
+version = "0.2.0"
 license='MIT License'
 repository="https://github.com/BastienTeissier/django-access-inspector"
 description='A tool to analyze your Django app access control'
