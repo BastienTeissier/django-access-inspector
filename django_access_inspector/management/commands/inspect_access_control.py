@@ -60,8 +60,13 @@ class Command(BaseCommand):
             )
 
         view_functions = self.extract_views_from_urlpatterns(urlconf.urlpatterns)
+        admin_views = []
 
-        for func, _, url_name in view_functions:
+        for func, url, url_name in view_functions:
+            if hasattr(func, "model_admin"):
+                admin_views.append(url_name)
+                continue
+
             permissions = []
             authentications = []
             if url_name is not None and hasattr(views, url_name):
@@ -128,6 +133,7 @@ class Command(BaseCommand):
                     func_name = re.sub(r" at 0x[0-9a-f]+", "", repr(func))
 
                 unchecked_views.append(f"{url_name} / {func_name}")
+                continue
 
             views[url_name] = {
                 "permissions_classes": list(set(permissions)),
@@ -138,13 +144,13 @@ class Command(BaseCommand):
 
         if options["output"] == "json":
             print(
-                json.dumps({"views": split_views, "unchecked_views": unchecked_views})
+                json.dumps({"views": split_views, "model_admin_views": admin_views, "unchecked_views": unchecked_views})
             )
         else:
-            self.print_views_in_terminal(views, unchecked_views)
+            self.print_views_in_terminal(views, unchecked_views, admin_views)
 
     def get_default_classes(self):
-        default_classes = {"authentication": [], "permission": []}
+        default_classes = {"authentication": ["BasicAuthentication"], "permission": ["AllowAny"]}
         if getattr(settings, "REST_FRAMEWORK", None) is None:
             return default_classes
         default_classes["permission"] = [
@@ -170,8 +176,27 @@ class Command(BaseCommand):
             )
         return (Text(", ".join(classes)), number_of_no, number_of_default)
 
-    def print_views_in_terminal(self, views, unchecked_views):
+    def print_views_in_terminal(self, views, unchecked_views, admin_views):
         console = Console()
+
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("Unchecked views")
+        for view in unchecked_views:
+            table.add_row(
+                    Text(view, style="bold red")
+                )
+        console.print(table)
+
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("Model admin view")
+        for view in admin_views:
+            if view is not None:
+                table.add_row(
+                        Text(view, style="bold grey")
+                    )
+        console.print(table)
+
+
 
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("View")
