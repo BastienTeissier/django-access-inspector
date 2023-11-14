@@ -237,7 +237,7 @@ class Command(BaseCommand):
                     default_classes["authentication"],
                 )
                 table.add_row(
-                    Text(url, style="bold blue"), permissions, authentications
+                    Text(url, style="bold blue"), authentications, permissions
                 )
 
         number_of_views = len(views.keys())
