@@ -64,82 +64,87 @@ class Command(BaseCommand):
         admin_views = []
 
         for func, _, url_name in view_functions:
-            if hasattr(func, "model_admin"):
-                admin_views.append(url_name)
-                continue
+            try:
+                if hasattr(func, "model_admin"):
+                    admin_views.append(url_name)
+                    continue
 
-            permissions = []
-            authentications = []
-            if url_name is not None and hasattr(views, url_name):
-                permissions = views[url_name].get("permission_classes", [])
+                permissions = []
+                authentications = []
+                if url_name is not None and hasattr(views, url_name):
+                    permissions = views[url_name].get("permission_classes", [])
 
-            if hasattr(func, "view_class"):
-                permissions.extend(
-                    [
-                        permission_class.__name__
-                        for permission_class in getattr(
-                            func.view_class, "permission_classes", []
-                        )
-                    ]
-                )
-                authentications.extend(
-                    [
-                        authentication_class.__name__
-                        for authentication_class in getattr(
-                            func.view_class, "authentication_classes", []
-                        )
-                    ]
-                )
-            elif hasattr(func, "cls"):
-                permissions.extend(
-                    [
-                        permission_class.__name__
-                        for permission_class in getattr(
-                            func.cls, "permission_classes", []
-                        )
-                    ]
-                )
-                authentications.extend(
-                    [
-                        authentication_class.__name__
-                        for authentication_class in getattr(
-                            func.cls, "authentication_classes", []
-                        )
-                    ]
-                )
-            elif hasattr(func, "initkwargs"):
-                permissions.extend(
-                    [
-                        permission_class.__name__
-                        for permission_class in getattr(
-                            func.initkwargs, "permission_classes", []
-                        )
-                    ]
-                )
-                authentications.extend(
-                    [
-                        authentication_class.__name__
-                        for authentication_class in getattr(
-                            func.initkwargs, "authentication_classes", []
-                        )
-                    ]
-                )
-            else:
-                func_name = func
-                if hasattr(func, "__name__"):
-                    func_name = func.__name__
-                elif hasattr(func, "__class__"):
-                    func_name = "%s()" % func.__class__.__name__
+                if hasattr(func, "view_class"):
+                    permissions.extend(
+                        [
+                            permission_class.__name__
+                            for permission_class in getattr(
+                                func.view_class, "permission_classes", []
+                            )
+                        ]
+                    )
+                    authentications.extend(
+                        [
+                            authentication_class.__name__
+                            for authentication_class in getattr(
+                                func.view_class, "authentication_classes", []
+                            )
+                        ]
+                    )
+                elif hasattr(func, "cls"):
+                    permissions.extend(
+                        [
+                            permission_class.__name__
+                            for permission_class in getattr(
+                                func.cls, "permission_classes", []
+                            )
+                        ]
+                    )
+                    authentications.extend(
+                        [
+                            authentication_class.__name__
+                            for authentication_class in getattr(
+                                func.cls, "authentication_classes", []
+                            )
+                        ]
+                    )
+                elif hasattr(func, "initkwargs"):
+                    permissions.extend(
+                        [
+                            permission_class.__name__
+                            for permission_class in getattr(
+                                func.initkwargs, "permission_classes", []
+                            )
+                        ]
+                    )
+                    authentications.extend(
+                        [
+                            authentication_class.__name__
+                            for authentication_class in getattr(
+                                func.initkwargs, "authentication_classes", []
+                            )
+                        ]
+                    )
                 else:
-                    func_name = re.sub(r" at 0x[0-9a-f]+", "", repr(func))
+                    func_name = func
+                    if hasattr(func, "__name__"):
+                        func_name = func.__name__
+                    elif hasattr(func, "__class__"):
+                        func_name = "%s()" % func.__class__.__name__
+                    else:
+                        func_name = re.sub(r" at 0x[0-9a-f]+", "", repr(func))
 
-                unchecked_views.append(f"{url_name} / {func_name}")
-                continue
+                    unchecked_views.append({"view": f"{url_name} / {func_name}", "cause": "unknown"})
+                    continue
 
-            views[url_name] = {
-                "permission_classes": list(set(permissions)),
-                "authentication_classes": list(set(authentications)),
-            }
+                views[url_name] = {
+                    "permission_classes": list(set(permissions)),
+                    "authentication_classes": list(set(authentications)),
+                }
+            except Exception as e:
+                print(f"Error: {e}")
+                unchecked_views.append({"view": f"{url_name} / {func_name}", "cause": "error"})
+
 
         split_views = self.split_views(views)
 
@@ -199,8 +204,9 @@ class Command(BaseCommand):
 
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column(f"Unchecked: {len(unchecked_views)} views")
+        table.add_column(f"Cause")
         for view in unchecked_views:
-            table.add_row(Text(view, style="bold red"))
+            table.add_row(Text(view["view"], style="bold red"), view["cause"])
         console.print(table)
 
         table = Table(show_header=True, header_style="bold magenta")
