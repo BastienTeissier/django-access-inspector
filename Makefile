@@ -13,3 +13,6 @@ check:
 build:
 	poetry run python -m build --sdist
 	poetry run python -m build --wheel
+
+deploy:
+	poetry run python -m twine upload dist/*

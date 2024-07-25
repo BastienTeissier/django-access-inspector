@@ -204,7 +204,7 @@ class Command(BaseCommand):
 
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column(f"Unchecked: {len(unchecked_views)} views")
-        table.add_column(f"Cause")
+        table.add_column("Cause")
         for view in unchecked_views:
             table.add_row(Text(view["view"], style="bold red"), view["cause"])
         console.print(table)

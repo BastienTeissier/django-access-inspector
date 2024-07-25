@@ -11,6 +11,7 @@ packages = [{include = "django_access_inspector"}]
 [tool.poetry.dependencies]
 python = "^3.10"
 rich = "^13.3.5"
+twine = "^5.1.1"
 
 
 [tool.poetry.group.dev.dependencies]
