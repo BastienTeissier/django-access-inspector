@@ -77,7 +77,7 @@ class Command(BaseCommand):
                 if hasattr(func, "view_class"):
                     permissions.extend(
                         [
-                            permission_class.__name__
+                            getattr(permission_class, "__name__", "unknown")
                             for permission_class in getattr(
                                 func.view_class, "permission_classes", []
                             )
@@ -85,7 +85,7 @@ class Command(BaseCommand):
                     )
                     authentications.extend(
                         [
-                            authentication_class.__name__
+                            getattr(authentication_class, "__name__", "unknown")
                             for authentication_class in getattr(
                                 func.view_class, "authentication_classes", []
                             )
@@ -94,7 +94,7 @@ class Command(BaseCommand):
                 elif hasattr(func, "cls"):
                     permissions.extend(
                         [
-                            permission_class.__name__
+                            getattr(permission_class, "__name__", "unknown")
                             for permission_class in getattr(
                                 func.cls, "permission_classes", []
                             )
@@ -102,7 +102,7 @@ class Command(BaseCommand):
                     )
                     authentications.extend(
                         [
-                            authentication_class.__name__
+                            getattr(authentication_class, "__name__", "unknown")
                             for authentication_class in getattr(
                                 func.cls, "authentication_classes", []
                             )
@@ -111,7 +111,7 @@ class Command(BaseCommand):
                 elif hasattr(func, "initkwargs"):
                     permissions.extend(
                         [
-                            permission_class.__name__
+                            getattr(permission_class, "__name__", "unknown")
                             for permission_class in getattr(
                                 func.initkwargs, "permission_classes", []
                             )
@@ -119,7 +119,7 @@ class Command(BaseCommand):
                     )
                     authentications.extend(
                         [
-                            authentication_class.__name__
+                            getattr(authentication_class, "__name__", "unknown")
                             for authentication_class in getattr(
                                 func.initkwargs, "authentication_classes", []
                             )
@@ -130,7 +130,7 @@ class Command(BaseCommand):
                     if hasattr(func, "__name__"):
                         func_name = func.__name__
                     elif hasattr(func, "__class__"):
-                        func_name = "%s()" % func.__class__.__name__
+                        func_name = "%s()" % getattr(func.__class__, "__name__", "unknown")
                     else:
                         func_name = re.sub(r" at 0x[0-9a-f]+", "", repr(func))
 
@@ -143,7 +143,7 @@ class Command(BaseCommand):
                 }
             except Exception as e:
                 print(f"Error: {e}")
-                unchecked_views.append({"view": f"{url_name} / {func_name}", "cause": "error"})
+                unchecked_views.append({"view": f"{url_name} / {func_name}", "cause": "unknown"})
 
 
         split_views = self.split_views(views)
