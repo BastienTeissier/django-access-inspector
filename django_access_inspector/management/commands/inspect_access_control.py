@@ -1,5 +1,6 @@
 import json
 import re
+import logging
 
 from django.conf import settings
 from django.core.exceptions import ViewDoesNotExist
@@ -10,6 +11,9 @@ from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 from rich.panel import Panel
+
+# Setup module logger
+logger = logging.getLogger(__name__)
 
 
 class RegexURLPattern:  # type: ignore
@@ -46,19 +50,18 @@ class Command(BaseCommand):
         views = {}
         unchecked_views = []
         if not hasattr(settings, urlconf):
-            raise CommandError(
-                "Settings module {} does not have the attribute {}.".format(
-                    settings, urlconf
-                )
+            msg = "Settings module {} does not have the attribute {}.".format(
+                settings, urlconf
             )
+            logger.error(msg)
+            raise CommandError(msg)
 
         try:
             urlconf = __import__(getattr(settings, urlconf), {}, {}, [""])
         except Exception as e:
-            raise CommandError(
-                "Error occurred while trying to load %s: %s"
-                % (getattr(settings, urlconf), str(e))
-            )
+            msg = "Error occurred while trying to load %s: %s" % (getattr(settings, urlconf), str(e))
+            logger.exception(msg)
+            raise CommandError(msg)
 
         view_functions = self.extract_views_from_urlpatterns(urlconf.urlpatterns)
         admin_views = []
@@ -146,15 +149,16 @@ class Command(BaseCommand):
                     "authentication_classes": list(set(authentications)),
                 }
             except Exception as e:
-                print(f"Error: {e}")
+                func_name = getattr(func, "__name__", "unknown") if hasattr(func, "__name__") else "unknown"
+                logger.exception(f"Error processing view {url_name} / {func_name}: {e}")
                 unchecked_views.append(
-                    {"view": f"{url_name} / {func_name}", "cause": "unknown"}
+                    {"view": f"{url_name} / {func_name}", "cause": str(e)}
                 )
 
         split_views = self.split_views(views)
 
         if options["output"] == "json":
-            print(
+            self.stdout.write(
                 json.dumps(
                     {
                         "views": split_views,
@@ -304,11 +308,13 @@ class Command(BaseCommand):
                     pattern = describe_pattern(p)
                     views.append((p.callback, base + pattern, name))
                 except ViewDoesNotExist:
+                    logger.warning(f"View does not exist for pattern: {p}")
                     continue
             elif isinstance(p, (URLResolver, RegexURLResolver)):
                 try:
                     patterns = p.url_patterns
-                except ImportError:
+                except ImportError as e:
+                    logger.exception(f"Failed to import URL patterns for {p}: {e}")
                     continue
                 if namespace and p.namespace:
                     _namespace = "{0}:{1}".format(namespace, p.namespace)
@@ -335,11 +341,13 @@ class Command(BaseCommand):
                         (p._get_callback(), base + describe_pattern(p), p.name)
                     )
                 except ViewDoesNotExist:
+                    logger.warning(f"View does not exist for pattern with _get_callback: {p}")
                     continue
             elif hasattr(p, "url_patterns") or hasattr(p, "_get_url_patterns"):
                 try:
                     patterns = p.url_patterns
-                except ImportError:
+                except ImportError as e:
+                    logger.exception(f"Failed to import URL patterns for {p}: {e}")
                     continue
                 views.extend(
                     self.extract_views_from_urlpatterns(
@@ -347,5 +355,7 @@ class Command(BaseCommand):
                     )
                 )
             else:
-                raise TypeError("%s does not appear to be a urlpattern object" % p)
+                error_msg = f"{p} does not appear to be a urlpattern object"
+                logger.error(error_msg)
+                raise TypeError(error_msg)
         return views
