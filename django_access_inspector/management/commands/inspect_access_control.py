@@ -130,11 +130,15 @@ class Command(BaseCommand):
                     if hasattr(func, "__name__"):
                         func_name = func.__name__
                     elif hasattr(func, "__class__"):
-                        func_name = "%s()" % getattr(func.__class__, "__name__", "unknown")
+                        func_name = "%s()" % getattr(
+                            func.__class__, "__name__", "unknown"
+                        )
                     else:
                         func_name = re.sub(r" at 0x[0-9a-f]+", "", repr(func))
 
-                    unchecked_views.append({"view": f"{url_name} / {func_name}", "cause": "unknown"})
+                    unchecked_views.append(
+                        {"view": f"{url_name} / {func_name}", "cause": "unknown"}
+                    )
                     continue
 
                 views[url_name] = {
@@ -143,8 +147,9 @@ class Command(BaseCommand):
                 }
             except Exception as e:
                 print(f"Error: {e}")
-                unchecked_views.append({"view": f"{url_name} / {func_name}", "cause": "unknown"})
-
+                unchecked_views.append(
+                    {"view": f"{url_name} / {func_name}", "cause": "unknown"}
+                )
 
         split_views = self.split_views(views)
 
