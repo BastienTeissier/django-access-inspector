@@ -1,28 +1,35 @@
-[tool.poetry]
+[project]
 name = "django-access-inspector"
 version = "0.2.1"
-license='MIT License'
-repository="https://github.com/BastienTeissier/django-access-inspector"
-description='A tool to analyze your Django app access control'
-authors = ["Bastien Teissier <bastient@theodo.fr>"]
+description = "A tool to analyze your Django app access control"
+authors = [{ name = "Bastien Teissier", email = "bastient@theodo.fr" }]
+requires-python = "~=3.10"
 readme = "README.md"
-packages = [{include = "django_access_inspector"}]
+license = {text = "MIT License"}
+dependencies = [
+    "rich>=13.3.5,<14",
+    "twine>=5.1.1,<6",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-rich = "^13.3.5"
-twine = "^5.1.1"
+[project.urls]
+Repository = "https://github.com/BastienTeissier/django-access-inspector"
 
+[dependency-groups]
+dev = [
+    "ruff>=0.11.2,<0.12.0",
+    "pytest>=7.3.1,<8",
+    "django>=5.2.0,<6",
+    "pytest-django>=4.5.2,<5",
+    "djangorestframework>=3.14.0,<4",
+    "build>=0.10.0,<0.11",
+]
 
-[tool.poetry.group.dev.dependencies]
-black = "^23.3.0"
-ruff = "^0.0.265"
-pytest = "^7.3.1"
-django = "^4.2.1"
-pytest-django = "^4.5.2"
-djangorestframework = "^3.14.0"
-build = "^0.10.0"
+[tool.hatch.build.targets.sdist]
+include = ["django_access_inspector"]
+
+[tool.hatch.build.targets.wheel]
+include = ["django_access_inspector"]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
