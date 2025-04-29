@@ -1,18 +1,18 @@
 format:
-	poetry run python -m black .
+	uv run ruff format
 
 lint:
-	poetry run ruff check .
+	uv run ruff check
 
 lint-fix:
-	poetry run ruff check . --fix
+	uv run ruff check . --fix
 
 check:
-	poetry run python manage.py inspect_access_control
+	uv run manage.py inspect_access_control
 
 build:
-	poetry run python -m build --sdist
-	poetry run python -m build --wheel
+	uv run -m build --sdist
+	uv run -m build --wheel
 
 deploy:
-	poetry run python -m twine upload dist/*
+	uv run -m twine upload dist/*
