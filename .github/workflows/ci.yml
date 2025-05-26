@@ -22,7 +22,10 @@ jobs:
         run: uv sync --all-extras --dev
 
       - name: Check linting with ruff
-        run: uv run ruff check
+        run: make lint
+
+      - name: Run test
+        run: make test
 
       - name: Main command
         run: uv run manage.py inspect_access_control
