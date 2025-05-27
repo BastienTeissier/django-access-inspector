@@ -1,0 +1,41 @@
+{
+  "views": {
+    "authenticated": {
+      "decorator": {
+        "permission_classes": ["TestOnly", "IsAuthenticated"],
+        "authentication_classes": ["SessionAuthentication"]
+      },
+      "function": {
+        "permission_classes": ["IsAuthenticated"],
+        "authentication_classes": ["SessionAuthentication"]
+      },
+      "attribute": {
+        "permission_classes": ["TestOnly", "IsAuthenticated"],
+        "authentication_classes": ["SessionAuthentication"]
+      },
+      "no-auth": {
+        "permission_classes": ["AllowAny"],
+        "authentication_classes": ["BasicAuthentication"]
+      },
+      "decorator-viewset-detail": {
+        "permission_classes": ["TestOnly", "IsAuthenticated"],
+        "authentication_classes": ["SessionAuthentication"]
+      },
+      "attribute-viewset-detail": {
+        "permission_classes": ["TestOnly", "IsAuthenticated"],
+        "authentication_classes": ["SessionAuthentication"]
+      },
+      "action-viewset-preview": {
+        "permission_classes": ["AllowAny"],
+        "authentication_classes": ["SessionAuthentication"]
+      },
+      "api-root": {
+        "permission_classes": ["AllowAny"],
+        "authentication_classes": ["BasicAuthentication"]
+      }
+    },
+    "unauthenticated": {}
+  },
+  "model_admin_views": [],
+  "unchecked_views": []
+}

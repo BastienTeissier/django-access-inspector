@@ -47,6 +47,27 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         urlconf = "ROOT_URLCONF"
 
+        mapped_views = self.map_views_by_permissions(urlconf)
+        split_views = self.split_views(mapped_views["views"])
+
+        if options["output"] == "json":
+            self.stdout.write(
+                json.dumps(
+                    {
+                        "views": split_views,
+                        "model_admin_views": mapped_views["admin_views"],
+                        "unchecked_views": mapped_views["unchecked_views"],
+                    }
+                )
+            )
+        else:
+            self.print_views_in_terminal(
+                mapped_views["views"],
+                mapped_views["unchecked_views"],
+                mapped_views["admin_views"],
+            )
+
+    def map_views_by_permissions(self, urlconf):
         views = {}
         unchecked_views = []
         if not hasattr(settings, urlconf):
@@ -59,7 +80,10 @@ class Command(BaseCommand):
         try:
             urlconf = __import__(getattr(settings, urlconf), {}, {}, [""])
         except Exception as e:
-            msg = "Error occurred while trying to load %s: %s" % (getattr(settings, urlconf), str(e))
+            msg = "Error occurred while trying to load %s: %s" % (
+                getattr(settings, urlconf),
+                str(e),
+            )
             logger.exception(msg)
             raise CommandError(msg)
 
@@ -149,26 +173,20 @@ class Command(BaseCommand):
                     "authentication_classes": list(set(authentications)),
                 }
             except Exception as e:
-                func_name = getattr(func, "__name__", "unknown") if hasattr(func, "__name__") else "unknown"
+                func_name = (
+                    getattr(func, "__name__", "unknown")
+                    if hasattr(func, "__name__")
+                    else "unknown"
+                )
                 logger.exception(f"Error processing view {url_name} / {func_name}: {e}")
                 unchecked_views.append(
                     {"view": f"{url_name} / {func_name}", "cause": str(e)}
                 )
-
-        split_views = self.split_views(views)
-
-        if options["output"] == "json":
-            self.stdout.write(
-                json.dumps(
-                    {
-                        "views": split_views,
-                        "model_admin_views": admin_views,
-                        "unchecked_views": unchecked_views,
-                    }
-                )
-            )
-        else:
-            self.print_views_in_terminal(views, unchecked_views, admin_views)
+        return {
+            "views": views,
+            "admin_views": admin_views,
+            "unchecked_views": unchecked_views,
+        }
 
     def get_default_classes(self):
         default_classes = {
@@ -341,7 +359,9 @@ class Command(BaseCommand):
                         (p._get_callback(), base + describe_pattern(p), p.name)
                     )
                 except ViewDoesNotExist:
-                    logger.warning(f"View does not exist for pattern with _get_callback: {p}")
+                    logger.warning(
+                        f"View does not exist for pattern with _get_callback: {p}"
+                    )
                     continue
             elif hasattr(p, "url_patterns") or hasattr(p, "_get_url_patterns"):
                 try:
