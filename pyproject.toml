@@ -8,6 +8,7 @@ readme = "README.md"
 license = {text = "MIT License"}
 dependencies = [
     "rich>=13.3.5,<14",
+    "safety>=3.5.1",
     "twine>=5.1.1,<6",
 ]
 

@@ -16,3 +16,6 @@ build:
 
 deploy:
 	uv run -m twine upload dist/*
+
+sca:
+	uv run safety scan
