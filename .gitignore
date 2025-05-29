@@ -7,3 +7,4 @@ dist/
 .pytest_cache/
 .ruff_cache/
 django_access_inspector.egg-info/
+.coverage
