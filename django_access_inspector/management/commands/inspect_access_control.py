@@ -23,8 +23,9 @@ class Command(BaseCommand):
         parser.add_argument(
             "--output",
             dest="output",
+            choices=["cli", "json"],
             default="cli",
-            help="Set the settings URL conf variable to use",
+            help="Select report format: human-readable terminal output (`cli`) or machine-readable JSON (`json`).",
         )
 
     def handle(self, *args: Any, **options: Any) -> None:
