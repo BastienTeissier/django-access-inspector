@@ -130,7 +130,8 @@ class ViewInspectorService:
             except ValueError as e:
                 error_str = str(e)
                 if error_str == "model_admin":
-                    admin_views.append(view_func.name)
+                    if view_func.name is not None:
+                        admin_views.append(view_func.name)
                 elif error_str.startswith("unknown:"):
                     view_info = error_str[8:]  # Remove "unknown:" prefix
                     unchecked_views.append(

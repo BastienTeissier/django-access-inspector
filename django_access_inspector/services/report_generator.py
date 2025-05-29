@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class ReportGeneratorService:
     """Service responsible for generating and formatting inspection reports."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.console = Console()
 
     def generate_json_report_from_split_views(

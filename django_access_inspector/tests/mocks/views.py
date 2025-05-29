@@ -10,15 +10,17 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, viewsets, mixins
 from django_access_inspector.tests.mocks.permissions import TestOnly
+from typing import Optional, Any
+from django.http import HttpRequest
 
 
 @permission_classes([IsAuthenticated, TestOnly])
 @authentication_classes([SessionAuthentication])
 class DemoDecorator(APIView):
-    def get(self, request, format=None):
+    def get(self, request: HttpRequest, format: Optional[str] = None) -> Response:
         return Response("toto", status=status.HTTP_201_CREATED)
 
-    def post(self, request, format=None):
+    def post(self, request: HttpRequest, format: Optional[str] = None) -> Response:
         return Response("toto", status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -26,18 +28,18 @@ class DemoAttribute(APIView):
     permission_classes = [IsAuthenticated, TestOnly]
     authentication_classes = [SessionAuthentication]
 
-    def get(self, request, format=None):
+    def get(self, request: HttpRequest, format: Optional[str] = None) -> Response:
         return Response("toto", status=status.HTTP_201_CREATED)
 
-    def post(self, request, format=None):
+    def post(self, request: HttpRequest, format: Optional[str] = None) -> Response:
         return Response("toto", status=status.HTTP_400_BAD_REQUEST)
 
 
 class NoAuthDemo(APIView):
-    def get(self, request, format=None):
+    def get(self, request: HttpRequest, format: Optional[str] = None) -> Response:
         return Response("toto", status=status.HTTP_201_CREATED)
 
-    def post(self, request, format=None):
+    def post(self, request: HttpRequest, format: Optional[str] = None) -> Response:
         return Response("toto", status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -47,8 +49,8 @@ class DecoratorDemoViewSet(
     viewsets.GenericViewSet,
     mixins.RetrieveModelMixin,
 ):
-    def retrieve(self, request, *args, **kwargs):
-        return super.retrieve(request, *args, **kwargs)
+    def retrieve(self, request: HttpRequest, *args: Any, **kwargs: Any) -> Response:
+        return super().retrieve(request, *args, **kwargs)
 
 
 class AttributeDemoViewSet(
@@ -58,8 +60,8 @@ class AttributeDemoViewSet(
     permission_classes = [IsAuthenticated, TestOnly]
     authentication_classes = [SessionAuthentication]
 
-    def retrieve(self, request, *args, **kwargs):
-        return super.retrieve(request, *args, **kwargs)
+    def retrieve(self, request: HttpRequest, *args: Any, **kwargs: Any) -> Response:
+        return super().retrieve(request, *args, **kwargs)
 
 
 @authentication_classes([SessionAuthentication])
@@ -72,7 +74,7 @@ class ActionDemoViewSet(
         permission_classes=[TestOnly],
         authentication_classes=[SessionAuthentication],
     )
-    def preview(self, request, *args, **kwargs):
+    def preview(self, request: HttpRequest, *args: Any, **kwargs: Any) -> Response:
         content = {"status": "request was permitted"}
         return Response(content)
 
@@ -80,6 +82,6 @@ class ActionDemoViewSet(
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 @authentication_classes([SessionAuthentication])
-def example_view(request, format=None):
+def example_view(request: HttpRequest, format: Optional[str] = None) -> Response:
     content = {"status": "request was permitted"}
     return Response(content)

@@ -5,7 +5,7 @@ This service handles URL pattern extraction and analysis from Django URL configu
 """
 
 import logging
-from typing import List
+from typing import List, Any
 from django.conf import settings
 from django.core.exceptions import ViewDoesNotExist
 from django.core.management.base import CommandError
@@ -29,7 +29,7 @@ class LocaleRegexURLResolver:
     pass
 
 
-def describe_pattern(p):
+def describe_pattern(p: Any) -> str:
     """Extract pattern description from URL pattern."""
     return str(p.pattern)
 
@@ -37,10 +37,10 @@ def describe_pattern(p):
 class UrlAnalyzerService:
     """Service responsible for extracting and analyzing URL patterns."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.LANGUAGES = getattr(settings, "LANGUAGES", [])
 
-    def load_urlconf(self, urlconf_name: str = "ROOT_URLCONF"):
+    def load_urlconf(self, urlconf_name: str = "ROOT_URLCONF") -> Any:
         """Load URL configuration from settings."""
         if not hasattr(settings, urlconf_name):
             msg = f"Settings module {settings} does not have the attribute {urlconf_name}."
@@ -56,7 +56,7 @@ class UrlAnalyzerService:
             raise CommandError(msg)
 
     def extract_views_from_urlpatterns(
-        self, urlpatterns, base="", namespace=None
+        self, urlpatterns: Any, base: str = "", namespace: Any = None
     ) -> List[ViewFunction]:
         """
         Return a list of views from a list of urlpatterns.
@@ -66,31 +66,36 @@ class UrlAnalyzerService:
         for p in urlpatterns:
             if isinstance(p, (URLPattern, RegexURLPattern)):
                 try:
-                    if not p.name:
-                        name = p.name
+                    # Handle both URLPattern and RegexURLPattern safely
+                    pattern_name = getattr(p, 'name', None)
+                    if not pattern_name:
+                        name = pattern_name
                     elif namespace:
-                        name = f"{namespace}:{p.name}"
+                        name = f"{namespace}:{pattern_name}"
                     else:
-                        name = p.name
+                        name = pattern_name
                     pattern = describe_pattern(p)
-                    views.append(
-                        ViewFunction(
-                            callback=p.callback, pattern=base + pattern, name=name
+                    callback = getattr(p, 'callback', None)
+                    if callback:
+                        views.append(
+                            ViewFunction(
+                                callback=callback, pattern=base + pattern, name=name
+                            )
                         )
-                    )
                 except ViewDoesNotExist:
                     logger.warning(f"View does not exist for pattern: {p}")
                     continue
             elif isinstance(p, (URLResolver, RegexURLResolver)):
                 try:
-                    patterns = p.url_patterns
+                    patterns = getattr(p, 'url_patterns', [])
                 except ImportError as e:
                     logger.exception(f"Failed to import URL patterns for {p}: {e}")
                     continue
-                if namespace and p.namespace:
-                    _namespace = f"{namespace}:{p.namespace}"
+                resolver_namespace = getattr(p, 'namespace', None)
+                if namespace and resolver_namespace:
+                    _namespace = f"{namespace}:{resolver_namespace}"
                 else:
-                    _namespace = p.namespace or namespace
+                    _namespace = resolver_namespace or namespace
                 pattern = describe_pattern(p)
                 if isinstance(p, LocaleRegexURLResolver):
                     for language in self.LANGUAGES:

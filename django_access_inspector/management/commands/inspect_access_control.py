@@ -1,5 +1,7 @@
 import logging
 
+from typing import Any
+
 from django.core.management.base import BaseCommand
 
 # Import the new services
@@ -16,7 +18,7 @@ logger = logging.getLogger(__name__)
 class Command(BaseCommand):
     help = "Displays all of the url matching routes for the project."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: Any) -> None:
         super().add_arguments(parser)
         parser.add_argument(
             "--output",
@@ -25,7 +27,7 @@ class Command(BaseCommand):
             help="Set the settings URL conf variable to use",
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         urlconf = "ROOT_URLCONF"
 
         # Initialize services
