@@ -1,6 +1,7 @@
-from rest_framework.permissions import BasePermission
 from typing import Any
+
 from django.http import HttpRequest
+from rest_framework.permissions import BasePermission
 from rest_framework.views import APIView
 
 

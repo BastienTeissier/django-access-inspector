@@ -1,14 +1,13 @@
 import logging
-
 from typing import Any
 
 from django.core.management.base import BaseCommand
 
 # Import the new services
 from django_access_inspector.services import (
+    ReportGeneratorService,
     UrlAnalyzerService,
     ViewInspectorService,
-    ReportGeneratorService,
 )
 
 # Setup module logger

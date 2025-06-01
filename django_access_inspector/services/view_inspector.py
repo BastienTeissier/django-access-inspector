@@ -5,18 +5,19 @@ This service handles the inspection of view functions to extract permission
 and authentication class information.
 """
 
-import re
 import logging
-from typing import List, Dict
+import re
+from typing import Dict, List
+
 from django.conf import settings
 
 from .models import (
-    ViewFunction,
-    ViewInspectionResult,
-    UncheckedView,
     AnalysisResult,
     DefaultClasses,
     SplitViews,
+    UncheckedView,
+    ViewFunction,
+    ViewInspectionResult,
 )
 
 logger = logging.getLogger(__name__)

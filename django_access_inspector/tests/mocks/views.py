@@ -1,17 +1,19 @@
-from rest_framework.decorators import (
-    api_view,
-    permission_classes,
-    authentication_classes,
-    action,
-)
-from rest_framework.authentication import SessionAuthentication
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status, viewsets, mixins
-from django_access_inspector.tests.mocks.permissions import TestOnly
-from typing import Optional, Any
+from typing import Any, Optional
+
 from django.http import HttpRequest
+from rest_framework import mixins, status, viewsets
+from rest_framework.authentication import SessionAuthentication
+from rest_framework.decorators import (
+    action,
+    api_view,
+    authentication_classes,
+    permission_classes,
+)
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from django_access_inspector.tests.mocks.permissions import TestOnly
 
 
 @permission_classes([IsAuthenticated, TestOnly])

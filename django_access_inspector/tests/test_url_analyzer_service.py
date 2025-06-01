@@ -10,15 +10,16 @@ Tests cover:
 """
 
 from unittest.mock import Mock, patch
+
+from django.core.exceptions import ViewDoesNotExist
+from django.core.management.base import CommandError
 from django.test import TestCase, override_settings
 from django.urls import URLPattern, URLResolver
-from django.core.management.base import CommandError
-from django.core.exceptions import ViewDoesNotExist
 
+from django_access_inspector.services.models import ViewFunction
 from django_access_inspector.services.url_analyzer import (
     UrlAnalyzerService,
 )
-from django_access_inspector.services.models import ViewFunction
 
 
 class MockURLPattern(URLPattern):

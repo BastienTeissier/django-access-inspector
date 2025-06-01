@@ -1,16 +1,16 @@
 # Services package for Django Access Inspector
 
-from .url_analyzer import UrlAnalyzerService
-from .view_inspector import ViewInspectorService
-from .report_generator import ReportGeneratorService
 from .models import (
+    AnalysisResult,
+    DefaultClasses,
+    SplitViews,
+    UncheckedView,
     ViewFunction,
     ViewInspectionResult,
-    UncheckedView,
-    AnalysisResult,
-    SplitViews,
-    DefaultClasses,
 )
+from .report_generator import ReportGeneratorService
+from .url_analyzer import UrlAnalyzerService
+from .view_inspector import ViewInspectorService
 
 __all__ = [
     "UrlAnalyzerService",

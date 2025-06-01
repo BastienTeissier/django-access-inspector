@@ -1,15 +1,16 @@
+import io
+import json  # Added import for json
+import os
 import unittest.mock
 from typing import Any
-from django.test import TestCase, override_settings  # Added override_settings
-from django.urls import path
-from django.views import View
-from django.http import HttpResponse, HttpRequest, JsonResponse
+
 from django.contrib.auth.decorators import login_required
 from django.core.management import call_command
 from django.core.management.base import CommandError  # Added CommandError
-import io
-import os
-import json  # Added import for json
+from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.test import TestCase, override_settings  # Added override_settings
+from django.urls import path
+from django.views import View
 
 
 # Custom comparison that handles lists by converting them to sets (order insensitive)

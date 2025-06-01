@@ -15,13 +15,13 @@ from unittest.mock import patch
 
 from django.test import TestCase, override_settings
 
-from django_access_inspector.services.report_generator import ReportGeneratorService
 from django_access_inspector.services.models import (
-    ViewInspectionResult,
-    UncheckedView,
     DefaultClasses,
     SplitViews,
+    UncheckedView,
+    ViewInspectionResult,
 )
+from django_access_inspector.services.report_generator import ReportGeneratorService
 
 
 class TestReportGeneratorService(TestCase):

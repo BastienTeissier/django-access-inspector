@@ -15,12 +15,12 @@ from unittest.mock import patch
 
 from django.test import TestCase, override_settings
 
-from django_access_inspector.services.view_inspector import ViewInspectorService
 from django_access_inspector.services.models import (
+    DefaultClasses,
     ViewFunction,
     ViewInspectionResult,
-    DefaultClasses,
 )
+from django_access_inspector.services.view_inspector import ViewInspectorService
 
 
 class MockPermissionClass:

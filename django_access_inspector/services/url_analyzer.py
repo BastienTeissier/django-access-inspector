@@ -5,7 +5,8 @@ This service handles URL pattern extraction and analysis from Django URL configu
 """
 
 import logging
-from typing import List, Any
+from typing import Any, List
+
 from django.conf import settings
 from django.core.exceptions import ViewDoesNotExist
 from django.core.management.base import CommandError
@@ -67,7 +68,7 @@ class UrlAnalyzerService:
             if isinstance(p, (URLPattern, RegexURLPattern)):
                 try:
                     # Handle both URLPattern and RegexURLPattern safely
-                    pattern_name = getattr(p, 'name', None)
+                    pattern_name = getattr(p, "name", None)
                     if not pattern_name:
                         name = pattern_name
                     elif namespace:
@@ -75,7 +76,7 @@ class UrlAnalyzerService:
                     else:
                         name = pattern_name
                     pattern = describe_pattern(p)
-                    callback = getattr(p, 'callback', None)
+                    callback = getattr(p, "callback", None)
                     if callback:
                         views.append(
                             ViewFunction(
@@ -87,11 +88,11 @@ class UrlAnalyzerService:
                     continue
             elif isinstance(p, (URLResolver, RegexURLResolver)):
                 try:
-                    patterns = getattr(p, 'url_patterns', [])
+                    patterns = getattr(p, "url_patterns", [])
                 except ImportError as e:
                     logger.exception(f"Failed to import URL patterns for {p}: {e}")
                     continue
-                resolver_namespace = getattr(p, 'namespace', None)
+                resolver_namespace = getattr(p, "namespace", None)
                 if namespace and resolver_namespace:
                     _namespace = f"{namespace}:{resolver_namespace}"
                 else:

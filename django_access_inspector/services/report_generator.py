@@ -8,12 +8,13 @@ in various output formats (CLI, JSON).
 import json
 import logging
 from typing import Dict, List
+
 from rich.console import Console
+from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
-from rich.panel import Panel
 
-from .models import ViewInspectionResult, UncheckedView, DefaultClasses, SplitViews
+from .models import DefaultClasses, SplitViews, UncheckedView, ViewInspectionResult
 
 logger = logging.getLogger(__name__)
 
