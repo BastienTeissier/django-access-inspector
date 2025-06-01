@@ -1,15 +1,15 @@
-from django.urls import path, include
+from django.urls import include, path
+from rest_framework import routers
 
 from demo_views.views import (
+    ActionDemoViewSet,
+    AttributeDemoViewSet,
+    DecoratorDemoViewSet,
     DemoAttribute,
     DemoDecorator,
-    example_view,
     NoAuthDemo,
-    DecoratorDemoViewSet,
-    AttributeDemoViewSet,
-    ActionDemoViewSet,
+    example_view,
 )
-from rest_framework import routers
 
 router = routers.DefaultRouter()
 

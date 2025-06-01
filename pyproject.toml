@@ -22,6 +22,9 @@ dev = [
     "pytest-django>=4.5.2,<5",
     "djangorestframework>=3.14.0,<4",
     "build>=0.10.0,<0.11",
+    "mypy>=1.8.0,<2.0",
+    "django-stubs>=4.2.0,<5.0",
+    "pytest-cov>=6.1.1",
 ]
 
 [tool.hatch.build.targets.sdist]
@@ -33,3 +36,32 @@ include = ["django_access_inspector"]
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.mypy]
+python_version = "3.10"
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+show_error_codes = true
+strict_equality = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unused_configs = true
+warn_unused_ignores = true
+
+# Django specific settings
+plugins = ["mypy_django_plugin.main"]
+
+# Allow some flexibility for Django's dynamic nature
+[[tool.mypy.overrides]]
+module = "django.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "rest_framework.*"
+ignore_missing_imports = true
+
+[tool.django-stubs]
+django_settings_module = "django_access_inspector.settings"

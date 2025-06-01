@@ -1,22 +1,24 @@
+import io
+import json  # Added import for json
+import os
 import unittest.mock
-from django.test import TestCase, override_settings  # Added override_settings
-from django.urls import path
-from django.views import View
-from django.http import HttpResponse, JsonResponse
+from typing import Any
+
 from django.contrib.auth.decorators import login_required
 from django.core.management import call_command
 from django.core.management.base import CommandError  # Added CommandError
-import io
-import os
-import json  # Added import for json
+from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.test import TestCase, override_settings  # Added override_settings
+from django.urls import path
+from django.views import View
 
 
 # Custom comparison that handles lists by converting them to sets (order insensitive)
-def compare_nested_structures(a, b):
+def compare_nested_structures(a: Any, b: Any) -> bool:
     if isinstance(a, dict) and isinstance(b, dict):
         if a.keys() != b.keys():
             return False
-        return all(compare_nested_structures(a[k], b[k]) for k in a.keys())
+        return all(bool(compare_nested_structures(a[k], b[k])) for k in a.keys())
     elif isinstance(a, list) and isinstance(b, list):
         if len(a) != len(b):
             return False
@@ -24,32 +26,32 @@ def compare_nested_structures(a, b):
         if all(isinstance(x, str) for x in a) and all(isinstance(x, str) for x in b):
             return set(a) == set(b)
         # For lists of complex objects, try comparing all elements
-        return all(any(compare_nested_structures(x, y) for y in b) for x in a)
+        return all(any(bool(compare_nested_structures(x, y)) for y in b) for x in a)
     else:
-        return a == b
+        return bool(a == b)
 
 
 # Mock Views
-def function_based_view(request):
+def function_based_view(request: HttpRequest) -> HttpResponse:
     return HttpResponse("Function-based view")
 
 
 class ClassBasedView(View):
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         return HttpResponse("Class-based view")
 
 
 class AuthenticatedView(View):
     permission_classes = ["IsAuthenticated"]
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         return HttpResponse("Authenticated view")
 
 
 class TokenAuthenticatedView(View):
     authentication_classes = ["TokenAuthentication"]
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         return HttpResponse("Token authenticated view")
 
 
@@ -57,19 +59,19 @@ class MixedAuthView(View):
     permission_classes = ["IsAuthenticated"]
     authentication_classes = ["TokenAuthentication"]
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         return HttpResponse("Mixed auth view")
 
 
 class AdminView(View):
     model_admin = True  # Simulate an admin view
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         return HttpResponse("Admin view")
 
 
 @login_required
-def unchecked_view(request):
+def unchecked_view(request: HttpRequest) -> JsonResponse:
     return JsonResponse({"data": []})
 
 
@@ -88,7 +90,7 @@ urlpatterns = [
 # Test Case
 class InspectAccessControlTests(TestCase):
     @unittest.mock.patch("django.conf.settings")
-    def setUp(self, mock_settings):
+    def setUp(self, mock_settings: Any) -> None:
         # Configure settings
         mock_settings.configure_mock(
             ROOT_URLCONF=__name__,
@@ -105,7 +107,7 @@ class InspectAccessControlTests(TestCase):
         globals()["urlpatterns"] = urlpatterns
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
-    def test_json_output(self, mock_stdout):
+    def test_json_output(self, mock_stdout: Any) -> None:
         call_command("inspect_access_control", output="json")
         output_str = mock_stdout.getvalue()
 
@@ -122,7 +124,7 @@ class InspectAccessControlTests(TestCase):
         )
 
     @override_settings(ROOT_URLCONF="non_existent_module_for_testing")
-    def test_error_invalid_root_urlconf(self):
+    def test_error_invalid_root_urlconf(self) -> None:
         with self.assertRaises(CommandError) as cm:
             call_command("inspect_access_control")
         # The error message might vary slightly depending on Django versions or how it's caught.

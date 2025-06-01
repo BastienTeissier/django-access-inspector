@@ -1,11 +1,23 @@
 format:
-	uv run ruff format
+	uv run ruff check --select I --fix && uv run ruff format
 
 lint:
 	uv run ruff check
 
 lint-fix:
 	uv run ruff check . --fix
+
+typecheck:
+	uv run mypy django_access_inspector/
+
+test:
+	uv run coverage run -m pytest --cov-fail-under=80
+
+validate: lint typecheck test
+	@echo "✅ All validation checks passed!"
+
+coverage:
+	uv run coverage report -m
 
 check:
 	uv run manage.py inspect_access_control
@@ -16,6 +28,3 @@ build:
 
 deploy:
 	uv run -m twine upload dist/*
-
-test:
-	uv run pytest
