@@ -1,4 +1,5 @@
 import logging
+import sys
 from typing import Any
 
 from django.core.management.base import BaseCommand
@@ -6,6 +7,7 @@ from django.core.management.base import BaseCommand
 # Import the new services
 from django_access_inspector.services import (
     ReportGeneratorService,
+    SnapshotService,
     UrlAnalyzerService,
     ViewInspectorService,
 )
@@ -26,6 +28,16 @@ class Command(BaseCommand):
             default="cli",
             help="Select report format: human-readable terminal output (`cli`) or machine-readable JSON (`json`).",
         )
+        parser.add_argument(
+            "--ci",
+            action="store_true",
+            help="Enable CI mode: fail if there are new unauthenticated or unchecked endpoints not in snapshot.",
+        )
+        parser.add_argument(
+            "--snapshot",
+            dest="snapshot_path",
+            help="Path to snapshot file for CI mode or to generate new snapshot.",
+        )
 
     def handle(self, *args: Any, **options: Any) -> None:
         urlconf = "ROOT_URLCONF"
@@ -34,6 +46,7 @@ class Command(BaseCommand):
         url_analyzer = UrlAnalyzerService()
         view_inspector = ViewInspectorService()
         report_generator = ReportGeneratorService()
+        snapshot_service = SnapshotService()
 
         # Extract views from URL patterns
         view_functions = url_analyzer.analyze_urlconf(urlconf)
@@ -41,6 +54,38 @@ class Command(BaseCommand):
         # Inspect views for permissions and authentication
         analysis_result = view_inspector.inspect_view_functions(view_functions)
 
+        # Handle snapshot generation
+        if options["snapshot_path"] and not options["ci"]:
+            try:
+                snapshot_service.save_snapshot(
+                    analysis_result, options["snapshot_path"]
+                )
+                self.stdout.write(
+                    self.style.SUCCESS(f"Snapshot saved to {options['snapshot_path']}")
+                )
+                return
+            except ValueError as e:
+                self.stderr.write(self.style.ERROR(f"Failed to save snapshot: {e}"))
+                sys.exit(1)
+
+        # Handle CI mode
+        if options["ci"]:
+            if not options["snapshot_path"]:
+                self.stderr.write(
+                    self.style.ERROR(
+                        "CI mode requires --snapshot argument with path to snapshot file"
+                    )
+                )
+                sys.exit(1)
+                return
+
+            ci_result = report_generator.ci_mode(
+                analysis_result, options["snapshot_path"]
+            )
+            sys.exit(ci_result.exit_code)
+            return
+
+        # Handle regular output modes
         if options["output"] == "json":
             # Generate and output JSON report
             json_report = report_generator.generate_json_report_from_split_views(
