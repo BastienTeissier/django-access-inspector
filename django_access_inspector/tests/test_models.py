@@ -7,7 +7,6 @@ particularly focusing on CI mode functionality.
 
 from datetime import datetime
 
-
 from django_access_inspector.services.models import (
     AnalysisResult,
     CIResult,

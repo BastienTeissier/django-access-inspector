@@ -10,7 +10,6 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-
 from django_access_inspector.services import (
     ReportGeneratorService,
     SnapshotService,

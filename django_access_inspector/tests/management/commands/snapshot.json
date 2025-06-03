@@ -2,7 +2,7 @@
   "views": {
     "authenticated": {
       "decorator": {
-        "permission_classes": ["TestOnly", "IsAuthenticated"],
+        "permission_classes": ["IsAuthenticated", "TestOnly"],
         "authentication_classes": ["SessionAuthentication"]
       },
       "function": {
@@ -10,19 +10,57 @@
         "authentication_classes": ["SessionAuthentication"]
       },
       "attribute": {
-        "permission_classes": ["TestOnly", "IsAuthenticated"],
+        "permission_classes": ["IsAuthenticated", "TestOnly"],
         "authentication_classes": ["SessionAuthentication"]
       },
       "no-auth": {
         "permission_classes": ["AllowAny"],
         "authentication_classes": ["BasicAuthentication"]
       },
+      "django-login-required": {
+        "permission_classes": [],
+        "authentication_classes": [
+          "Django:login_required",
+          "SourceHint:login_required_mentioned",
+          "SourceHint:login_required_decorator"
+        ]
+      },
+      "django-permission-required": {
+        "permission_classes": [],
+        "authentication_classes": [
+          "Django:login_required",
+          "SourceHint:permission_required_mentioned",
+          "Django:permission_required"
+        ]
+      },
+      "django-multiple-decorators": {
+        "permission_classes": [],
+        "authentication_classes": [
+          "Django:login_required",
+          "SourceHint:login_required_mentioned",
+          "SourceHint:login_required_decorator"
+        ]
+      },
+      "django-login-mixin": {
+        "permission_classes": [],
+        "authentication_classes": [
+          "Django:DjangoLoginRequiredView",
+          "Django:LoginRequiredMixin"
+        ]
+      },
+      "django-permission-mixin": {
+        "permission_classes": [],
+        "authentication_classes": [
+          "Django:DjangoPermissionRequiredView",
+          "Django:PermissionRequiredMixin"
+        ]
+      },
       "decorator-viewset-detail": {
-        "permission_classes": ["TestOnly", "IsAuthenticated"],
+        "permission_classes": ["IsAuthenticated", "TestOnly"],
         "authentication_classes": ["SessionAuthentication"]
       },
       "attribute-viewset-detail": {
-        "permission_classes": ["TestOnly", "IsAuthenticated"],
+        "permission_classes": ["IsAuthenticated", "TestOnly"],
         "authentication_classes": ["SessionAuthentication"]
       },
       "action-viewset-preview": {
@@ -34,8 +72,15 @@
         "authentication_classes": ["BasicAuthentication"]
       }
     },
-    "unauthenticated": {}
+    "unauthenticated": {
+      "django-cbv-no-auth": {
+        "permission_classes": [],
+        "authentication_classes": []
+      }
+    }
   },
   "model_admin_views": [],
-  "unchecked_views": []
+  "unchecked_views": [
+    { "view": "django-no-auth / django_no_auth_view", "cause": "unknown" }
+  ]
 }

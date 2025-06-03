@@ -7,7 +7,6 @@ This module tests the CI mode operations and console output functionality.
 from datetime import datetime
 from unittest.mock import patch
 
-
 from django_access_inspector.services.models import (
     AnalysisResult,
     CIResult,

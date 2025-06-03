@@ -11,6 +11,7 @@ from django_access_inspector.services import (
     UrlAnalyzerService,
     ViewInspectorService,
 )
+from django_access_inspector.services.debug_logger import enable_debug_logging
 
 # Setup module logger
 logger = logging.getLogger(__name__)
@@ -38,9 +39,19 @@ class Command(BaseCommand):
             dest="snapshot_path",
             help="Path to snapshot file for CI mode or to generate new snapshot.",
         )
+        parser.add_argument(
+            "--debug",
+            action="store_true",
+            help="Enable detailed debug logging to help troubleshoot authentication detection issues.",
+        )
 
     def handle(self, *args: Any, **options: Any) -> None:
         urlconf = "ROOT_URLCONF"
+
+        # Enable debug logging if requested
+        if options.get("debug", False):
+            enable_debug_logging()
+            print("🔍 Debug logging enabled - detailed analysis will be shown")
 
         # Initialize services
         url_analyzer = UrlAnalyzerService()
