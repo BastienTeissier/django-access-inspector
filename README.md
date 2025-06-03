@@ -4,7 +4,7 @@ Django Access Inspector is a comprehensive access control app for Django that he
 
 ## Installation
 
-To install Django Access Inspector, you can use either `pip` or `poetry`. Here are the commands:
+To install Django Access Inspector, you can use `pip`, `poetry`, or `uv`. Here are the commands:
 
 ```shell
 pip install django-access-inspector
@@ -12,6 +12,10 @@ pip install django-access-inspector
 
 ```shell
 poetry add django-access-inspector
+```
+
+```shell
+uv add django-access-inspector
 ```
 
 After installing, make sure to add `"django_access_inspector"` to your `INSTALLED_APPS` setting in your Django project's `settings.py` file:
@@ -25,6 +29,8 @@ INSTALLED_APPS = [
 
 ## Usage
 
+### Basic Usage
+
 To run Django Access Inspector, use the following command:
 
 ```shell
@@ -36,6 +42,53 @@ By default, it will provide a human-readable output. If you prefer a JSON output
 ```shell
 python manage.py inspect_access_control --output json
 ```
+
+### CI Mode
+
+Django Access Inspector supports a CI mode that helps ensure your application's access control remains secure over time. This mode uses snapshots to track the current state of your endpoints and fails if new unauthenticated or unchecked endpoints are introduced.
+
+#### Generating a Snapshot
+
+First, generate a baseline snapshot of your current access control state:
+
+```shell
+python manage.py inspect_access_control --snapshot baseline.json
+```
+
+This will save the current state of all your endpoints to a JSON file.
+
+#### Running in CI Mode
+
+In your CI pipeline, use the snapshot to validate that no new security issues have been introduced:
+
+```shell
+python manage.py inspect_access_control --ci --snapshot baseline.json
+```
+
+The command will:
+- Compare the current analysis with the saved snapshot
+- Exit with code 0 if no new security issues are found
+- Exit with code 1 if new unauthenticated or unchecked endpoints are detected
+- Display detailed information about any changes found
+
+This is particularly useful in CI/CD pipelines to prevent introducing new security vulnerabilities.
+
+### Debug Mode
+
+When you need to troubleshoot authentication detection issues, you can enable detailed debug logging:
+
+```shell
+python manage.py inspect_access_control --debug
+```
+
+Debug mode provides detailed information about:
+- URL pattern extraction process
+- View function discovery and analysis
+- Authentication and permission detection logic
+- Categorization decisions for each endpoint
+- Detailed analysis of Django and DRF authentication mechanisms
+
+This helps you understand why certain endpoints might be categorized as "unchecked" and allows you to verify that the tool correctly identifies your authentication setup.
 
 ## Example
 

@@ -1,6 +1,6 @@
 [project]
 name = "django-access-inspector"
-version = "0.2.1"
+version = "0.3.0"
 description = "A tool to analyze your Django app access control"
 authors = [{ name = "Bastien Teissier", email = "bastient@theodo.fr" }]
 requires-python = "~=3.10"
