@@ -6,6 +6,7 @@ during the access control inspection process.
 """
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 
@@ -58,3 +59,61 @@ class DefaultClasses:
 
     authentication: List[str] = field(default_factory=list)
     permission: List[str] = field(default_factory=list)
+
+
+@dataclass
+class Snapshot:
+    """Snapshot of security baseline for CI mode."""
+
+    version: str
+    timestamp: datetime
+    unauthenticated_endpoints: List[str] = field(default_factory=list)
+    unchecked_endpoints: List[UncheckedView] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert snapshot to dictionary for JSON serialization."""
+        return {
+            "version": self.version,
+            "timestamp": self.timestamp.isoformat(),
+            "unauthenticated_endpoints": self.unauthenticated_endpoints,
+            "unchecked_endpoints": [
+                {"view": uv.view, "cause": uv.cause} for uv in self.unchecked_endpoints
+            ],
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Snapshot":
+        """Create snapshot from dictionary loaded from JSON."""
+        return cls(
+            version=data["version"],
+            timestamp=datetime.fromisoformat(data["timestamp"]),
+            unauthenticated_endpoints=data["unauthenticated_endpoints"],
+            unchecked_endpoints=[
+                UncheckedView(view=uv["view"], cause=uv["cause"])
+                for uv in data["unchecked_endpoints"]
+            ],
+        )
+
+
+@dataclass
+class CIResult:
+    """Result of CI mode comparison."""
+
+    success: bool
+    new_unauthenticated_endpoints: List[str] = field(default_factory=list)
+    new_unchecked_endpoints: List[UncheckedView] = field(default_factory=list)
+    removed_endpoints: List[str] = field(default_factory=list)
+    message: str = ""
+
+    @property
+    def has_new_security_issues(self) -> bool:
+        """Check if there are new security issues."""
+        return (
+            len(self.new_unauthenticated_endpoints) > 0
+            or len(self.new_unchecked_endpoints) > 0
+        )
+
+    @property
+    def exit_code(self) -> int:
+        """Get appropriate exit code for CI systems."""
+        return 0 if self.success else 1

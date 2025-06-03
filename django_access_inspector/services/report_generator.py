@@ -2,7 +2,7 @@
 Report Generator Service for Django Access Inspector.
 
 This service handles the generation and formatting of inspection reports
-in various output formats (CLI, JSON).
+in various output formats (CLI, JSON) and provides CI mode functionality.
 """
 
 import json
@@ -14,7 +14,15 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from .models import DefaultClasses, SplitViews, UncheckedView, ViewInspectionResult
+from .models import (
+    AnalysisResult,
+    CIResult,
+    DefaultClasses,
+    SplitViews,
+    UncheckedView,
+    ViewInspectionResult,
+)
+from .snapshot import SnapshotService
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +30,128 @@ logger = logging.getLogger(__name__)
 class ReportGeneratorService:
     """Service responsible for generating and formatting inspection reports."""
 
+    # Constants
+    HEADER_STYLE = "bold magenta"
+
     def __init__(self) -> None:
         self.console = Console()
+        self.snapshot_service = SnapshotService()
+
+    def ci_mode(self, analysis_result: AnalysisResult, snapshot_path: str) -> CIResult:
+        """
+        Run CI mode comparison with snapshot.
+
+        Args:
+            analysis_result: Current analysis result
+            snapshot_path: Path to snapshot file
+
+        Returns:
+            CIResult with comparison details and exit code
+
+        Raises:
+            FileNotFoundError: If snapshot file doesn't exist
+            ValueError: If snapshot file is invalid
+        """
+        try:
+            snapshot = self.snapshot_service.load_snapshot(snapshot_path)
+            ci_result = self.snapshot_service.compare_with_snapshot(
+                analysis_result, snapshot
+            )
+
+            # Print CI results to console
+            self._print_ci_results(ci_result)
+
+            return ci_result
+
+        except FileNotFoundError:
+            error_msg = f"Snapshot file not found: {snapshot_path}"
+            self._print_ci_error(
+                error_msg,
+                "Use --snapshot <path> to generate a baseline snapshot first.",
+            )
+            return CIResult(success=False, message=error_msg)
+        except ValueError as e:
+            error_msg = f"Invalid snapshot file: {e}"
+            self._print_ci_error(error_msg)
+            return CIResult(success=False, message=error_msg)
+
+    def _print_ci_error(self, error_msg: str, additional_info: str = "") -> None:
+        """Print CI error message."""
+        content = f"[bold red]{error_msg}[/bold red]"
+        if additional_info:
+            content += f"\n{additional_info}"
+
+        self.console.print(Panel(content, title="CI Mode Error", style="red"))
+
+    def _print_ci_results(self, ci_result: CIResult) -> None:
+        """Print CI results to console."""
+        if ci_result.success:
+            self._print_ci_success()
+        else:
+            self._print_ci_failure(ci_result)
+
+    def _print_ci_success(self) -> None:
+        """Print successful CI result."""
+        self.console.print(
+            Panel(
+                "[bold green]✓ CI check passed[/bold green]\n"
+                "No new security issues detected.",
+                title="CI Mode Results",
+                style="green",
+            )
+        )
+
+    def _print_ci_failure(self, ci_result: CIResult) -> None:
+        """Print failed CI result with details."""
+        failure_details = []
+
+        self._add_unauthenticated_details(ci_result, failure_details)
+        self._add_unchecked_details(ci_result, failure_details)
+        self._add_removed_details(ci_result, failure_details)
+
+        self.console.print(
+            Panel(
+                "\n".join(failure_details),
+                title="CI Mode Results - Security Issues Detected",
+                style="red",
+            )
+        )
+
+    def _add_unauthenticated_details(
+        self, ci_result: CIResult, failure_details: List[str]
+    ) -> None:
+        """Add unauthenticated endpoint details to failure report."""
+        if ci_result.new_unauthenticated_endpoints:
+            count = len(ci_result.new_unauthenticated_endpoints)
+            failure_details.append(
+                f"[bold red]✗ {count} new unauthenticated endpoint(s):[/bold red]"
+            )
+            for endpoint in ci_result.new_unauthenticated_endpoints:
+                failure_details.append(f"  • {endpoint}")
+
+    def _add_unchecked_details(
+        self, ci_result: CIResult, failure_details: List[str]
+    ) -> None:
+        """Add unchecked endpoint details to failure report."""
+        if ci_result.new_unchecked_endpoints:
+            count = len(ci_result.new_unchecked_endpoints)
+            failure_details.append(
+                f"[bold red]✗ {count} new unchecked endpoint(s):[/bold red]"
+            )
+            for unchecked in ci_result.new_unchecked_endpoints:
+                failure_details.append(f"  • {unchecked.view} ({unchecked.cause})")
+
+    def _add_removed_details(
+        self, ci_result: CIResult, failure_details: List[str]
+    ) -> None:
+        """Add removed endpoint details to failure report."""
+        if ci_result.removed_endpoints:
+            count = len(ci_result.removed_endpoints)
+            failure_details.append(
+                f"[bold blue]ℹ {count} endpoint(s) removed:[/bold blue]"
+            )
+            for endpoint in ci_result.removed_endpoints:
+                failure_details.append(f"  • {endpoint}")
 
     def generate_json_report_from_split_views(
         self,
@@ -90,7 +218,7 @@ class ReportGeneratorService:
         self, unchecked_views: List[UncheckedView]
     ) -> None:
         """Print table of unchecked views."""
-        table = Table(show_header=True, header_style="bold magenta")
+        table = Table(show_header=True, header_style=self.HEADER_STYLE)
         table.add_column(f"Unchecked: {len(unchecked_views)} views")
         table.add_column("Cause")
 
@@ -101,7 +229,7 @@ class ReportGeneratorService:
 
     def _print_admin_views_table(self, admin_views: List[str]) -> None:
         """Print table of model admin views."""
-        table = Table(show_header=True, header_style="bold magenta")
+        table = Table(show_header=True, header_style=self.HEADER_STYLE)
         table.add_column(f"Model admin: {len(admin_views)} views")
 
         for view in admin_views:
@@ -114,7 +242,7 @@ class ReportGeneratorService:
         self, views: Dict[str, ViewInspectionResult], default_classes: DefaultClasses
     ) -> None:
         """Print main table with views, authentication, and permission classes."""
-        table = Table(show_header=True, header_style="bold magenta")
+        table = Table(show_header=True, header_style=self.HEADER_STYLE)
         table.add_column("Views")
         table.add_column("Authentication Classes")
         table.add_column("Permission Classes")
@@ -211,7 +339,13 @@ class ReportGeneratorService:
 
     def _get_default_classes(self) -> DefaultClasses:
         """Get default classes from Django settings."""
-        from django.conf import settings
+        try:
+            from django.conf import settings
+        except ImportError:
+            # Fallback for testing or non-Django environments
+            return DefaultClasses(
+                authentication=["BasicAuthentication"], permission=["AllowAny"]
+            )
 
         default_classes = DefaultClasses(
             authentication=["BasicAuthentication"], permission=["AllowAny"]
