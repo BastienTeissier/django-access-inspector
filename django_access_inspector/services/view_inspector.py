@@ -90,7 +90,7 @@ class ViewInspectorService:
                 permission_classes = getattr(func.view_class, "permission_classes", [])
                 permissions.extend(
                     [
-                        permission_class                             # keep string as-is
+                        permission_class
                         if isinstance(permission_class, str)
                         else getattr(permission_class, "__name__", "unknown")
                         for permission_class in permission_classes

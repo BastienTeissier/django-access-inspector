@@ -12,6 +12,7 @@ from fastmcp import FastMCP
 from fastmcp.server import Context
 
 from django_access_inspector.services import (
+    SnapshotService,
     UrlAnalyzerService,
     ViewInspectorService,
 )
@@ -33,16 +34,18 @@ def create_mcp_server() -> FastMCP:
     # Initialize the FastMCP server
     mcp = FastMCP(
         name="Django Access Inspector",
-        version="1.0.0",
+        version="0.4.0",
     )
 
     # Initialize services
     url_analyzer = UrlAnalyzerService()
     view_inspector = ViewInspectorService()
+    snapshot_service = SnapshotService()
 
     @mcp.tool
     def analyze_endpoints(
-        endpoint: Optional[str] = None,
+        endpoint: str = "",
+        snapshot_path: str = "",
         ctx: Optional[Context] = None,
     ) -> Dict[str, Union[str, Dict, List]]:
         """
@@ -50,13 +53,20 @@ def create_mcp_server() -> FastMCP:
 
         Args:
             endpoint: Specific endpoint to analyze. If None, analyzes all endpoints.
+            snapshot_path: If provided, returns only endpoints that newly fail CI
+                (new unauthenticated or new unchecked) compared to the snapshot.
             ctx: MCP context for logging and progress reporting
 
         Returns:
             Dictionary containing analysis results in JSON format
         """
         if ctx:
-            ctx.info("Starting endpoint analysis...")
+            if snapshot_path:
+                ctx.info(
+                    "Starting CI-failing endpoints analysis (snapshot provided)..."
+                )
+            else:
+                ctx.info("Starting endpoint analysis...")
 
         try:
             # Extract views from URL patterns
@@ -69,7 +79,7 @@ def create_mcp_server() -> FastMCP:
             analysis_result = view_inspector.inspect_view_functions(view_functions)
 
             # If specific endpoint requested, filter results
-            if endpoint:
+            if endpoint != "":
                 if ctx:
                     ctx.info(f"Filtering results for endpoint: {endpoint}")
 
@@ -83,14 +93,55 @@ def create_mcp_server() -> FastMCP:
                     }
                 analysis_result = filtered_result
 
-            # Split views by authentication
+            # If a snapshot is provided, return only CI-failing endpoints
+            if snapshot_path != "":
+                try:
+                    snapshot = snapshot_service.load_snapshot(snapshot_path)
+                    ci_result = snapshot_service.compare_with_snapshot(
+                        analysis_result, snapshot
+                    )
+
+                    result: Dict[str, Union[str, Dict, List]] = {
+                        "summary": {
+                            "mode": "ci_failing",
+                            "new_unauthenticated": len(
+                                ci_result.new_unauthenticated_endpoints
+                            ),
+                            "new_unchecked": len(ci_result.new_unchecked_endpoints),
+                            "removed": len(ci_result.removed_endpoints),
+                            "message": ci_result.message,
+                        },
+                        "unauthenticated_endpoints": ci_result.new_unauthenticated_endpoints,
+                        "unchecked_endpoints": [
+                            {"view": uv.view, "cause": uv.cause}
+                            for uv in ci_result.new_unchecked_endpoints
+                        ],
+                        "removed_endpoints": ci_result.removed_endpoints,
+                    }
+
+                    if endpoint:
+                        result["filtered_for"] = endpoint
+
+                    if ctx:
+                        ctx.info("CI comparison completed successfully")
+
+                    return result
+
+                except Exception as e:
+                    error_msg = f"Failed CI comparison: {str(e)}"
+                    logger.error(error_msg, exc_info=True)
+                    if ctx:
+                        ctx.error(error_msg)
+                    return {"error": error_msg}
+
+            # Regular full analysis (no snapshot): split and return all
             split_views = view_inspector.split_views_by_authentication(
                 analysis_result.views
             )
 
-            # Generate structured response
             result = {
                 "summary": {
+                    "mode": "full",
                     "total_views": len(analysis_result.views),
                     "authenticated_views": len(split_views.authenticated),
                     "unauthenticated_views": len(split_views.unauthenticated),
@@ -125,109 +176,18 @@ def create_mcp_server() -> FastMCP:
                 ctx.error(error_msg)
             return {"error": error_msg}
 
-    @mcp.tool
-    def get_endpoint_details(
-        endpoint: str,
-        ctx: Optional[Context] = None,
-    ) -> Dict[str, Union[str, List, Dict]]:
-        """
-        Get detailed information about a specific endpoint.
-
-        Args:
-            endpoint: The endpoint URL pattern to analyze
-            ctx: MCP context for logging and progress reporting
-
-        Returns:
-            Dictionary containing detailed endpoint information
-        """
-        if ctx:
-            ctx.info(f"Getting detailed information for endpoint: {endpoint}")
-
-        try:
-            # Extract views from URL patterns
-            view_functions = url_analyzer.analyze_urlconf("ROOT_URLCONF")
-
-            # Find the specific endpoint
-            target_view = None
-            for view_func in view_functions:
-                if view_func.name == endpoint or view_func.pattern == endpoint:
-                    target_view = view_func
-                    break
-
-            if not target_view:
-                return {
-                    "error": f"Endpoint '{endpoint}' not found",
-                    "available_endpoints": [
-                        vf.name or vf.pattern for vf in view_functions[:10]
-                    ],
-                }
-
-            # Inspect the specific view
-            try:
-                result = view_inspector.inspect_view_function(target_view)
-
-                # Get additional details
-                details = {
-                    "endpoint": endpoint,
-                    "url_name": result.url_name,
-                    "url_pattern": target_view.pattern,
-                    "permission_classes": result.permission_classes,
-                    "authentication_classes": result.authentication_classes,
-                    "view_function": {
-                        "name": getattr(target_view.callback, "__name__", "unknown"),
-                        "module": getattr(
-                            target_view.callback, "__module__", "unknown"
-                        ),
-                    },
-                    "security_status": "authenticated"
-                    if (result.permission_classes or result.authentication_classes)
-                    else "unauthenticated",
-                }
-
-                if ctx:
-                    ctx.info(f"Successfully analyzed endpoint: {endpoint}")
-
-                return details
-
-            except ValueError as e:
-                error_str = str(e)
-                if error_str == "model_admin":
-                    return {
-                        "endpoint": endpoint,
-                        "url_name": target_view.name,
-                        "url_pattern": target_view.pattern,
-                        "security_status": "admin_view",
-                        "note": "This is a Django admin view with built-in authentication",
-                    }
-                elif error_str.startswith("unknown:"):
-                    return {
-                        "endpoint": endpoint,
-                        "url_name": target_view.name,
-                        "url_pattern": target_view.pattern,
-                        "security_status": "unchecked",
-                        "cause": error_str[8:],  # Remove "unknown:" prefix
-                        "note": "This endpoint could not be analyzed for authentication patterns",
-                    }
-                else:
-                    raise e
-
-        except Exception as e:
-            error_msg = f"Failed to get endpoint details: {str(e)}"
-            logger.error(error_msg, exc_info=True)
-            if ctx:
-                ctx.error(error_msg)
-            return {"error": error_msg}
-
     @mcp.prompt
     def security_analysis_prompt(
-        endpoint_name: str,
+        endpoint_name: str = "",
+        snapshot_path: str = "",
         ctx: Optional[Context] = None,
     ) -> str:
         """
         Generate security analysis and recommendations for Django endpoints.
 
         Args:
-            endpoint_name: The name of the endpoint to analyze
+            endpoint_name: Optional name of the endpoint to analyze
+            snapshot_path: Optional path to CI snapshot for comparison
             ctx: MCP context for logging and progress reporting
 
         Returns:
@@ -250,19 +210,28 @@ def create_mcp_server() -> FastMCP:
         """
 
         ##### Prompt element 4: Input data to process #####
-        INPUT_DATA = f"""
-        <ENDPOINT_REQUEST>
-        {endpoint_name}
-        </ENDPOINT_REQUEST>
-        """
+        INPUT_DATA = ""
+        if endpoint_name != "":
+            INPUT_DATA = f"""
+            <ENDPOINT_REQUEST>
+            {endpoint_name}
+            </ENDPOINT_REQUEST>
+            """
+        if snapshot_path != "":
+            INPUT_DATA += f"""
+            <SNAPSHOT_PATH_REQUEST>
+            {snapshot_path}
+            </SNAPSHOT_PATH_REQUEST>
+            """
 
         TASK_DESCRIPTION = """
         Rules & procedure
 
         Call the tool
-        • If the user supplies a single endpoint slug/path, call
-        analyze_endpoints("<slug>").
-        • If the user supplies none, call analyze_endpoints() to scan all endpoints.
+        • Single endpoint: analyze_endpoints(endpoint="<name>").
+        • All endpoints: analyze_endpoints().
+        • CI failing only: analyze_endpoints(snapshot_path="<snapshot.json>").
+        • CI failing for a single endpoint: analyze_endpoints(endpoint="<name>", snapshot_path="<snapshot.json>").
 
         Analyze the code
         • Identify the file containing the endpoint and its view function.
@@ -345,9 +314,7 @@ def create_mcp_server() -> FastMCP:
         return PROMPT
 
     if logger.isEnabledFor(logging.INFO):
-        logger.info(
-            "MCP server created with tools: analyze_endpoints, get_endpoint_details"
-        )
+        logger.info("MCP server created with tools: analyze_endpoints")
         logger.info("MCP server created with prompts: security_analysis_prompt")
 
     return mcp
@@ -384,7 +351,7 @@ def _filter_analysis_for_endpoint(
 
     # Check in unchecked views
     for unchecked in analysis_result.unchecked_views:
-        if endpoint in unchecked.view:
+        if endpoint == unchecked.view or unchecked.view.endswith(f"/{endpoint}"):
             return AnalysisResult(
                 views={},
                 admin_views=[],

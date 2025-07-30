@@ -31,3 +31,6 @@ deploy:
 
 inspector:
 	npx @modelcontextprotocol/inspector
+
+start_mcp:
+	uv run manage.py start_mcp_server
