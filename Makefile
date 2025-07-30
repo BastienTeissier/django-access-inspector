@@ -28,3 +28,6 @@ build:
 
 deploy:
 	uv run -m twine upload dist/*
+
+inspector:
+	npx @modelcontextprotocol/inspector
