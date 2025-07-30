@@ -9,6 +9,7 @@ license = {text = "MIT License"}
 dependencies = [
     "rich>=13.3.5,<14",
     "twine>=5.1.1,<6",
+    "fastmcp>=2.9.0,<2.10",
 ]
 
 [project.urls]
