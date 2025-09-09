@@ -58,6 +58,46 @@ class ReportGeneratorService:
                 analysis_result, snapshot
             )
 
+            print(ci_result)
+
+            # Print CI results to console
+            self._print_ci_results(ci_result)
+
+            return ci_result
+
+        except FileNotFoundError:
+            error_msg = f"Snapshot file not found: {snapshot_path}"
+            self._print_ci_error(
+                error_msg,
+                "Use --snapshot <path> to generate a baseline snapshot first.",
+            )
+            return CIResult(success=False, message=error_msg)
+        except ValueError as e:
+            error_msg = f"Invalid snapshot file: {e}"
+            self._print_ci_error(error_msg)
+            return CIResult(success=False, message=error_msg)
+
+    def mcp_mode(self, analysis_result: AnalysisResult, snapshot_path: str) -> CIResult:
+        """
+        Run MCP mode comparison with snapshot.
+
+        Args:
+            analysis_result: Current analysis result
+            snapshot_path: Path to snapshot file
+
+        Returns:
+            CIResult with comparison details and exit code
+
+        Raises:
+            FileNotFoundError: If snapshot file doesn't exist
+            ValueError: If snapshot file is invalid
+        """
+        try:
+            snapshot = self.snapshot_service.load_snapshot(snapshot_path)
+            ci_result = self.snapshot_service.compare_with_snapshot(
+                analysis_result, snapshot
+            )
+
             # Print CI results to console
             self._print_ci_results(ci_result)
 
