@@ -35,7 +35,7 @@ include = ["django_access_inspector"]
 include = ["django_access_inspector"]
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling<1.25"]
 build-backend = "hatchling.build"
 
 [tool.mypy]
