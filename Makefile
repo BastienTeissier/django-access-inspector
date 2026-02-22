@@ -28,9 +28,3 @@ build:
 
 deploy:
 	uv run -m twine upload dist/*
-
-inspector:
-	npx @modelcontextprotocol/inspector
-
-start_mcp:
-	uv run manage.py start_mcp_server
