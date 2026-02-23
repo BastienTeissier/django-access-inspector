@@ -1,6 +1,6 @@
 [project]
 name = "django-access-inspector"
-version = "0.4.2"
+version = "0.5.0"
 description = "A tool to analyze your Django app access control"
 authors = [{ name = "Bastien Teissier", email = "bastient@theodo.fr" }]
 requires-python = "~=3.10"
@@ -9,7 +9,6 @@ license = {text = "MIT License"}
 dependencies = [
     "rich>=13.3.5,<14",
     "twine>=5.1.1,<6",
-    "fastmcp>=2.14.2,<2.15",
     "pydantic>=2.12,<3",
 ]
 
