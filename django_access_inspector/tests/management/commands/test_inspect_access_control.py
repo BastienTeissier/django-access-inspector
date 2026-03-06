@@ -125,13 +125,6 @@ class InspectAccessControlTests(TestCase):
 
     @override_settings(ROOT_URLCONF="non_existent_module_for_testing")
     def test_error_invalid_root_urlconf(self) -> None:
-        with self.assertRaises(CommandError) as cm:
+        with self.assertRaises(SystemExit) as cm:
             call_command("inspect_access_control")
-        # The error message might vary slightly depending on Django versions or how it's caught.
-        # Checking for part of the module name and a common error phrase.
-        self.assertTrue(
-            "non_existent_module_for_testing" in str(cm.exception)
-            or "cannot import name" in str(cm.exception)
-            or "ModuleNotFoundError"
-            in str(cm.exception)  # More generic for module import failures
-        )
+        self.assertEqual(cm.exception.code, 1)

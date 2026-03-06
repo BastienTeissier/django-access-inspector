@@ -391,7 +391,7 @@ class TestInspectAccessControlCommand(TestCase):
 
     def test_help_text(self):
         """Test command help text."""
-        assert "url matching routes" in self.command.help.lower()
+        assert "access control" in self.command.help.lower()
 
 
 class TestCommandIntegration:
