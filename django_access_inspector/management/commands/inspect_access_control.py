@@ -1,5 +1,6 @@
 import logging
 import sys
+from argparse import RawDescriptionHelpFormatter
 from typing import Any
 
 from django.core.management.base import BaseCommand
@@ -16,9 +17,42 @@ from django_access_inspector.services.debug_logger import enable_debug_logging
 # Setup module logger
 logger = logging.getLogger(__name__)
 
+HELP_EPILOG = """
+Examples:
+  python manage.py inspect_access_control
+    Run a basic access control inspection with CLI output.
+
+  python manage.py inspect_access_control --output json
+    Output the inspection results as JSON.
+
+  python manage.py inspect_access_control --snapshot baseline.json
+    Generate a snapshot of the current access control state.
+
+  python manage.py inspect_access_control --ci --snapshot baseline.json
+    Run in CI mode, comparing against a saved snapshot.
+
+  python manage.py inspect_access_control --debug
+    Enable detailed debug logging for troubleshooting.
+
+Workflow:
+  1. Run the command to inspect your project's access control.
+  2. Generate a snapshot to save the current state.
+  3. Use CI mode in your pipeline to detect new security issues.
+  4. Use --debug to troubleshoot authentication detection.
+"""
+
 
 class Command(BaseCommand):
-    help = "Displays all of the url matching routes for the project."
+    help = (
+        "Inspect and report on access control (authentication and permissions) "
+        "for all URL endpoints in your Django project."
+    )
+
+    def create_parser(self, prog_name: str, subcommand: str, **kwargs: Any) -> Any:
+        parser = super().create_parser(prog_name, subcommand, **kwargs)
+        parser.epilog = HELP_EPILOG
+        parser.formatter_class = RawDescriptionHelpFormatter
+        return parser
 
     def add_arguments(self, parser: Any) -> None:
         super().add_arguments(parser)
@@ -46,6 +80,21 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args: Any, **options: Any) -> None:
+        try:
+            self._execute(*args, **options)
+        except SystemExit:
+            raise
+        except Exception as e:
+            self.stderr.write(self.style.ERROR(f"Error: {e}"))
+            self.stderr.write(
+                self.style.WARNING(
+                    "Run 'python manage.py inspect_access_control --help' "
+                    "for usage information."
+                )
+            )
+            sys.exit(1)
+
+    def _execute(self, *args: Any, **options: Any) -> None:
         urlconf = "ROOT_URLCONF"
 
         # Enable debug logging if requested
